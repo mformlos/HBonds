@@ -3,10 +3,12 @@
 #include <stdlib.h>
 #include <iostream>
 #include <csignal>
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <math.h>
 #include <list>
+#include <forward_list>
 #include "../lib/Eigen/Eigen/Dense"
 #include "../lib/Water.h"
 #include "../lib/HelperFunctions.h"
@@ -73,7 +75,7 @@ int main(int argc, char* argv[]) {
 		}*/
 		std::cout << "found neighbours" << std::endl;
 		for (auto& mol : Molecules[0].HBonds ) {
-			std::cout << mol -> Index << std::endl;
+			std::cout << mol << std::endl;
 
 		}
 		unsigned count {0};
@@ -85,7 +87,15 @@ int main(int argc, char* argv[]) {
 		std::cout << "total H-bonds: " << count << std::endl;
 
 		/// RING SEARCH
+		for (unsigned i = 0; i < NumberOfMolecules; i++) {
+			//std::cout << "start node: " << i << std::endl;
+			searchRings(Molecules, i, NumberOfMolecules, 10);
+			std::cout << "start node: " << i << "Min Ring: " << Molecules[i].MinRing << std::endl;
+		}
 
 		Step += SamplingStep;
 	}
+	gettimeofday(&end, NULL);
+	double realTime { ((end.tv_sec - start.tv_sec) * 1000000u + end.tv_usec - start.tv_usec) / 1.e6 };
+	std::cout << "total time: " << realTime << std::endl;
 }

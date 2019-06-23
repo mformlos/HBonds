@@ -149,8 +149,8 @@ bool findNeighbours(std::vector<Water>& Molecules, std::vector<std::vector<std::
 					for (auto& other : CellList[l][m][n]) {
 						if (other == &mol) continue;
 						if (HydrogenBond(mol, *other, BoxSize, CutOff, angleMax)) {
-							mol.HBonds.push_front(other);
-							//other -> HBonds.push_front(&mol);
+							mol.HBonds.push_front(other -> Index);
+							other -> HBonds.push_front(mol.Index);
 						}
 					}
 				}
@@ -158,4 +158,159 @@ bool findNeighbours(std::vector<Water>& Molecules, std::vector<std::vector<std::
 		}
 	}
 }
+
+
+/*void DFSUtil(unsigned u, unsigned v, std::vector<bool>& SptSet, std::vector<unsigned>& Distances)
+{
+    // Mark the current node as visited and
+    // print it
+    SptSet[v] = true;
+
+    cout << v << " ";
+
+    // Recur for all the vertices adjacent
+    // to this vertex
+    std::list<int>::iterator i;
+    for (i = Molecules[v].HBonds.begin(); i !=  Molecules[v].HBonds.end(); ++i) {
+        if (!SptSet[i->Index] ) DFSUtil(i->Index, SptSet);
+    }
+}*/
+
+void loop (unsigned source, unsigned v, std::vector<Water>& Molecules, std::vector<unsigned>& Path, std::vector<std::vector<unsigned>>& AllPaths, unsigned MaxN) {
+	//std::cout << Path.size() << " " << v << std::endl;
+
+	for (auto& j : Molecules[v].HBonds) {
+		std::vector<unsigned>::iterator PathLoc {std::find(Path.begin(), Path.end(), v)};
+		if (PathLoc!=Path.end()) Path.erase(PathLoc+1, Path.end());
+		bool stop {false};
+		bool found_ring {false};
+		//if (SptSet[j]) stop=true;
+		if (j < source ) {
+			//std::cout << "1" << std::endl;
+			stop=true;
+		}
+		else if (Path.size()>MaxN) {
+			//std::cout << "2" << std::endl;
+			stop = true;
+		}
+		else if (std::find(Path.begin(), Path.end(), j) != Path.end()) {
+			//std::cout << "3" << std::endl;
+			stop=true;
+		}
+		else if (j == source) {
+			if (Path.size()>2) {
+				found_ring = true;
+				Path.push_back(j);
+			}
+			stop=true;
+			//std::cout << "4" << std::endl;
+		}
+		for (auto& bond : Molecules[j].HBonds) {
+			if (std::find(Path.begin(), Path.end()-1, bond) != Path.end()-1) {
+				//std::cout << "5" << std::endl;
+				stop=true;
+			}
+		}
+		if (found_ring) {
+			AllPaths.push_back(Path);
+			//std::cout << "ring found : ";
+			for (auto& member : Path ) {
+				//std::cout << member << " ";
+				if (Path.size() < Molecules[member].MinRing) Molecules[member].MinRing = Path.size();
+			}
+			//std::cout << std::endl;
+			//return true;
+		}
+		if (!stop) {
+			Path.push_back(j);
+			loop(source, j, Molecules, Path, AllPaths, MaxN);
+		}
+		//else return false;
+	}
+}
+
+unsigned searchRings(std::vector<Water>& Molecules, unsigned Source, unsigned Nmol, unsigned MaxN) {
+	//std::vector<unsigned> Distances(Nmol);
+	//std::vector<bool> SptSet(Nmol);
+	std::vector<unsigned> Path;
+	std::vector<std::vector<unsigned>> AllPaths;
+	//std::cout << "nearest neighbours: ";
+	//for (auto& neighbour : Molecules[Source].HBonds) {
+	//	std::cout << neighbour << " ";
+	//}
+	//std::cout << std::endl;
+	for (auto& neighbour : Molecules[Source].HBonds) {
+		Path.clear();
+		//Path.push_back(Source);
+		Path.push_back(neighbour);
+		loop(Source, neighbour, Molecules, Path, AllPaths, MaxN);
+	}
+
+}
+
+/*unsigned searchRing(std::vector<Water*>& Molecules, unsigned Source, unsigned Nmol, unsigned MaxN) {
+	std::vector<unsigned> Distances(Nmol);
+	std::vector<bool> SptSet(Nmol);
+	Distances.fill(MaxN+1);
+	Distances[Source]=MaxN;
+	SptSet.fill(false);
+	unsigned MinRing{MaxN}, CurrentMol{Source}, CurrentPath{0};
+	while (true) {
+		for (auto& Neighbour : Molecules[CurrentMol].HBonds) {
+			unsigned v {Neighbour -> Index};
+			unsigned newDist = CurrentPath+1;
+			if (v == Source && newDist< MinRing && newDist > 2 ) {
+				MinRing = newDist;
+				if (MinRing == 3 ) return 3;
+			}
+			if (!SptSet(v) && newDist < Distance[v]) {
+				Distance[v] = newDist;
+				CurrentMol=Neighbour.Index;
+				CurrentPath=Distance[CurrentMol];
+			}
+			if (CurrentMol == Source && )
+				break;
+			}
+		}
+		SptSet[CurrentMol]=true;
+	}
+	for (unsigned Target = 0; Target < Nmol; Target++) {
+		// Pick the minimum distance vertex from the set of vertices not
+		// yet processed. u is always equal to src in the first iteration.
+		unsigned min = MaxN, min_index {};
+		for (unsigned u = 0; u < Nmol; u++) {
+		     if (sptSet[u] == false && Distance[u] <= min) {
+		    	 min = Distance[u];
+		    	 min_index = u;
+		     }
+		}
+		//unsigned u = std::min_element(Distances.begin(), Distances.end())-Distances.begin();
+		// Mark the picked vertex as processed
+
+		// Update dist value of the adjacent vertices of the picked vertex.
+	    for (auto& Neighbour : Molecules[u].HBonds) {
+	    	unsigned v {Neighbour -> Index};
+	    	unsigned newDist = Distance[u]+1;
+	    	if (v == Source && newDist< MinRing && newDist > 2 ) MinRing = newDist;
+	    	if (!SptSet[v] && newDist < Distance[v]) Distance[v] = newDist;
+	    }
+	    if (u != Source) SptSet[u] = true;
+		else if (v == Source) {
+			if (Distance[v] == 3) return true;
+
+		}
+
+		}
+		for (int v = 0; v < V; v++) {
+
+		 // Update dist[v] only if is not in sptSet, there is an edge from
+		 // u to v, and total weight of path from src to  v through u is
+		 // smaller than current value of dist[v]
+		 if (!sptSet[v] && graph[u][v] && dist[u] != INT_MAX
+									   && dist[u]+graph[u][v] < dist[v])
+			dist[v] = dist[u] + graph[u][v];
+	 }
+
+
+}*/
 

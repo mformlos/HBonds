@@ -198,7 +198,7 @@ void loop (unsigned source, unsigned v, std::vector<Water>& Molecules, std::vect
 			stop=true;
 		}
 		else if (j == source) {
-			if (Path.size()>2) {
+			if (Path.size()>1) {
 				found_ring = true;
 				Path.push_back(j);
 			}

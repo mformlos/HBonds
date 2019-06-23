@@ -89,8 +89,8 @@ int main(int argc, char* argv[]) {
 		/// RING SEARCH
 		for (unsigned i = 0; i < NumberOfMolecules; i++) {
 			//std::cout << "start node: " << i << std::endl;
-			searchRings(Molecules, i, NumberOfMolecules, 10);
-			std::cout << "start node: " << i << "Min Ring: " << Molecules[i].MinRing << std::endl;
+			searchRings(Molecules, i, NumberOfMolecules, 8);
+			if (Molecules[i].MinRing < 4) std::cout << "start node: " << i << "Min Ring: " << Molecules[i].MinRing << std::endl;
 		}
 
 		Step += SamplingStep;

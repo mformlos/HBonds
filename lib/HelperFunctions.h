@@ -23,6 +23,52 @@ inline Vector3d relPos(const Vector3d& posfirst, const Vector3d& possecond, cons
     return dist;
 }
 
+bool initializePositionsXYZ(std::vector<Water>& vec, std::array<double,3>& BoxSize, std::string filename) {
+	std::ifstream file {filename};
+	std::string line{};
+	if (!file.is_open()) return false;
+	std::string dump, Type;
+	double x, y, z;
+	unsigned count {0}, Natom {}, Ncurr{0}, NH1{0}, NH2{0};
+	bool H1 {true};
+	file >> std::skipws >> Natom;
+	file >> std::skipws >> BoxSize[0] >> BoxSize[1] >> BoxSize[2];
+	std::cout << Natom << " " << BoxSize[0] << " " << BoxSize[1] << " " << BoxSize[2] << std::endl;
+	while (file >> std::skipws >> Type >> x >> y >> z) {
+		if (Type == "O") {
+    		vec[count].PositionO(0) = x;
+    		vec[count].PositionO(1) = y;
+    		vec[count].PositionO(2) = z;
+		}
+		else if (Type == "H" && H1) {
+			vec[count].PositionH1(0) = x;
+			vec[count].PositionH1(1) = y;
+			vec[count].PositionH1(2) = z;
+			H1=false;
+			NH1++;
+		}
+		else if (Type == "H" && !H1) {
+			vec[count].PositionH2(0) = x;
+			vec[count].PositionH2(1) = y;
+			vec[count].PositionH2(2) = z;
+			H1=true;
+			NH2++;
+			count++;
+		}
+		Ncurr++;
+	}
+	if (count != vec.size()) {
+		std::cout << "only " << count << " water molecules were initialized" << std::endl;
+		return false;
+	}
+	if (Natom != Ncurr || NH2 != vec.size() || NH1 != vec.size()) {
+		std::cout << "only " << Ncurr << " atoms, " << NH1 << "H1 atoms and " << NH2 << "H2 atoms were initialized" << std::endl;
+		return false;
+	}
+	file.close();
+	return true;
+}
+
 bool initializePositions(std::vector<Water>& vec, std::array<double,3>& BoxSize, std::string filename) {
     std::ifstream file {filename};
     std::string line{};
